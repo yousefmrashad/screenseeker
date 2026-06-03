@@ -41,14 +41,14 @@ Ensure the grounding package `screenseeker` is correctly configured in your Pyth
 Captures a fresh screenshot and runs visual search to find the Notepad icon on every iteration. This is the main mode for robust automation:
 
 ```bash
-uv run main.py
+uv run automate.py
 ```
 
 ### 2. Run in Cached Testing Mode
 Locates the Notepad icon once before entering the loop. Useful for fast debugging of keyboard emulation, clipboard syncing, and directory write validations:
 
 ```bash
-uv run main.py --cache-icon
+uv run automate.py --cache-icon
 ```
 
 ### 3. Run Grounding-Only Script
