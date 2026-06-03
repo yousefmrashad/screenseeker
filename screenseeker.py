@@ -27,7 +27,8 @@ class BoundingBox(BaseModel):
 
 class GroundingResult(BaseModel):
     reasoning: str = Field(description="Visual reasoning leading to the target location.")
-    box: BoundingBox = Field(description="The normalized bounding box enclosing the target.")
+    found: bool = Field(description="True if the target is found on the screen, False otherwise.")
+    box: Optional[BoundingBox] = Field(default=None, description="The normalized bounding box enclosing the target. Must be provided if found is True.")
 
 
 class VerificationResult(BaseModel):
@@ -215,25 +216,28 @@ For each candidate:
 Prioritize the top candidate in the list."""
 
         logger.info("Executing POSITIONINFERENCE with Planner (Structured Output)...")
-        response = generate_content_limited(
-            client=self.client,
-            model=config.model_name,
-            contents=[image, prompt],
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=PlannerOutput,
-                media_resolution="MEDIA_RESOLUTION_MEDIUM"
+        try:
+            response = generate_content_limited(
+                client=self.client,
+                model=config.model_name,
+                contents=[image, prompt],
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=PlannerOutput,
+                    media_resolution="MEDIA_RESOLUTION_MEDIUM"
+                )
             )
-        )
-        
-        result: PlannerOutput = response.parsed
-        logger.info(f"Planner Reasoning: {result.reasoning}")
-        for i, c in enumerate(result.candidates):
-            logger.info(f"Candidate {i}: '{c.name}' (Confidence: {c.confidence}) box: {c.box}")
-            
-        return result.candidates
+            result: PlannerOutput = response.parsed
+            logger.info(f"Planner Reasoning: {result.reasoning}")
+            for i, c in enumerate(result.candidates):
+                logger.info(f"Candidate {i}: '{c.name}' (Confidence: {c.confidence}) box: {c.box}")
+                
+            return result.candidates
+        except Exception as e:
+            logger.error(f"Planner position inference failed due to API/network error: {e}. Returning empty candidate list to force fallback.")
+            return []
 
-    def direct_grounding(self, image: Image.Image, config: ElementConfig) -> Tuple[int, int, int, int]:
+    def direct_grounding(self, image: Image.Image, config: ElementConfig) -> Optional[Tuple[int, int, int, int]]:
         """
         Execute Step 6: DIRECTGROUNDING(I, viewport).
 
@@ -242,10 +246,10 @@ Prioritize the top candidate in the list."""
             config: ElementConfig object holding search configurations
 
         Returns:
-            Tuple of (x1, y1, x2, y2) absolute coordinates of target
+            Tuple of (x1, y1, x2, y2) absolute coordinates of target if found, or None.
         """
         prompt = f"""You are the Grounding model. Find the target element on the screen: '{config.target_name}'
-Return its exact bounding box coordinates normalized to [0, 1000]."""
+Describe its location and state. If it exists on the screen, set 'found' to true and return its exact bounding box coordinates normalized to [0, 1000]. If it is not present, set 'found' to false and omit 'box'."""
 
         logger.info("Executing DIRECTGROUNDING on crop...")
         response = generate_content_limited(
@@ -259,6 +263,10 @@ Return its exact bounding box coordinates normalized to [0, 1000]."""
             )
         )
         result: GroundingResult = response.parsed
+        if not result.found or result.box is None:
+            logger.info(f"Direct Grounding failed: Target not found. Reasoning: {result.reasoning}")
+            return None
+            
         abs_box = normalized_to_absolute(result.box, image.width, image.height)
         logger.info(f"Direct Grounding Result: {abs_box} (Reasoning: {result.reasoning})")
         return abs_box
@@ -363,7 +371,7 @@ Here is my instruction:
         if depth >= config.max_depth or img_w <= s_min or img_h <= s_min:
             logger.info("Base case reached. Running direct grounding.")
             box = self.direct_grounding(image, config)
-            if self.verify_prediction(image, box, config):
+            if box is not None and self.verify_prediction(image, box, config):
                 return box
             return None
 
@@ -373,7 +381,7 @@ Here is my instruction:
         if not candidates:
             logger.info("No candidates proposed by planner. Running direct grounding.")
             box = self.direct_grounding(image, config)
-            if self.verify_prediction(image, box, config):
+            if box is not None and self.verify_prediction(image, box, config):
                 return box
             return None
 

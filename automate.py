@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 import time
+from typing import Tuple
 
 import pyautogui
 import pyperclip
@@ -97,7 +98,7 @@ def is_notepad_open() -> bool:
         return False
 
 
-def locate_notepad_icon(seeker: ScreenSeekeR, config: ElementConfig) -> tuple:
+def locate_notepad_icon(seeker: ScreenSeekeR, config: ElementConfig) -> Tuple[int, int, Image.Image, Tuple[int, int, int, int]]:
     """
     Locate the Notepad icon on the desktop and return resolved logical coordinates (click_x, click_y).
     """

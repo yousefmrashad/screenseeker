@@ -1,9 +1,11 @@
 import os
 import sys
 import time
+
 import pyautogui
-from PIL import Image, ImageDraw
 import typer
+from PIL import Image, ImageDraw
+
 from screenseeker import ElementConfig, ScreenSeekeR
 
 app = typer.Typer(add_completion=False)

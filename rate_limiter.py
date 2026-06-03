@@ -1,9 +1,11 @@
-import time
 import logging
 import threading
+import time
 from functools import wraps
 from typing import Any, List, Optional
-from google.genai import types, client
+
+from google.genai import client, types
+
 import config
 
 logger = logging.getLogger("RateLimiter")
@@ -76,14 +78,27 @@ def generate_content_limited(
     model: str,
     contents: List[Any],
     config: Optional[types.GenerateContentConfig] = None
-) -> Any:
+) -> types.GenerateContentResponse:
     """
-    Invokes the Gemini API generate_content method.
+    Invokes the Gemini API generate_content method with robust error handling and retries.
     This is the only function in the application that performs the network request 
     and it contains no other bounded operations.
     """
-    return client.models.generate_content(
-        model=model,
-        contents=contents,
-        config=config
-    )
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            return client.models.generate_content(
+                model=model,
+                contents=contents,
+                config=config
+            )
+        except Exception as e:
+            logger.warning(
+                f"Gemini API network call failed (attempt {attempt + 1}/{max_retries}): {e}"
+            )
+            if attempt == max_retries - 1:
+                logger.error("Maximum retries reached. Raising API error.")
+                raise e
+            # Exponential backoff delay
+            sleep_duration = 2.0 * (attempt + 1)
+            time.sleep(sleep_duration)
