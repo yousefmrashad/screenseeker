@@ -1,14 +1,12 @@
 # ScreenSeekeR: General-Purpose VLM-Based Visual Grounding Engine
 
 <p align="center">
-  <a href="https://www.codefactor.io/repository/github/yousefmrashad/screenseeker">
-    <img src="https://www.codefactor.io/repository/github/yousefmrashad/screenseeker/badge" alt="CodeFactor" />
-  </a>
-  <a href="https://www.gnu.org/licenses/gpl-3.0">
-    <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3" />
-  </a>
+  <a href="https://www.codefactor.io/repository/github/yousefmrashad/screenseeker"><img src="https://www.codefactor.io/repository/github/yousefmrashad/screenseeker/badge" alt="CodeFactor" /></a>
+  <a href="https://deepwiki.com/yousefmrashad/screenseeker"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" /></a>
+  <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-orange.svg" alt="License: GPL v3" /></a>
   <img src="https://img.shields.io/badge/python-3.13%2B-blue.svg" alt="Python: 3.13+" />
 </p>
+
 A general-purpose visual grounding utility adapted from the recursive visual search concepts in the ScreenSeekeR paper ([arXiv:2504.07981](https://arxiv.org/pdf/2504.07981)). It leverages Vision-Language Models (VLMs) like Gemini 3.5 Flash to dynamically locate any arbitrary GUI element, icon, text field, or button on a desktop screen without requiring pre-trained templates or exact match images.
 
 This repository provides a primary command-line grounding tool (`ground.py`) and a specific end-to-end demonstration (`automate.py`) showing how the visual grounding engine is integrated into a desktop automation loop (automating Windows Notepad tasks).
@@ -100,4 +98,4 @@ To demonstrate how `ScreenSeekeR` is used inside a live script, we provide `auto
 
 ## 📄 License
 
-This project is licensed under the **GNU General Public License v3.0 (GPLv3)**. See the [LICENSE](file:///C:/Users/youse/Development/screenseekr/LICENSE) file for the full text.
+This project is licensed under the **GNU General Public License v3.0 (GPLv3)**. See the [LICENSE](LICENSE) file for the full text.
