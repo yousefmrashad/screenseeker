@@ -1,19 +1,19 @@
-# Vision-Based Desktop Automation with Dynamic Icon Grounding
+# ScreenSeekeR: General-Purpose VLM-Based Visual Grounding Engine
 
-A robust Python automation script that leverages computer vision to dynamically ground, launch, interact with, and close the Windows Notepad application. 
+A general-purpose visual grounding utility adapted from the recursive visual search concepts in the ScreenSeekeR paper ([arXiv:2504.07981](https://arxiv.org/pdf/2504.07981)). It leverages Vision-Language Models (VLMs) like Gemini 3.5 Flash to dynamically locate any arbitrary GUI element, icon, text field, or button on a desktop screen without requiring pre-trained templates or exact match images.
 
-This project was built to automate fetching blog posts from a REST API and writing them to individual text files in a target directory via Notepad GUI automation, handling various hardware constraints, window state checks, and display scales.
+This repository provides a primary command-line grounding tool (`ground.py`) and a specific end-to-end demonstration (`automate.py`) showing how the visual grounding engine is integrated into a desktop automation loop (automating Windows Notepad tasks).
 
 ---
 
 ## 🚀 Key Features
 
-* **Dynamic Visual Grounding**: Captured via `pyautogui` and grounded dynamically on *every loop iteration* to adapt to layouts where the desktop Notepad icon is moved, dragged, or rearranged during execution.
-* **CLI Testing Flag (`--cache-icon`)**: Supports running in cached-coordinate mode, locating the Notepad icon once at the start of execution to accelerate debugging of the keyboard and file-saving loops.
-* **High-DPI Display Scaling Match**: Automatically resolves physical pixel bounds returned by visual search models to logical OS screen coordinate clicks by comparing screenshot dimensions with PyAutoGUI display metrics.
-* **Resilient Window Closing Sequence**: Bypasses common laptop hardware conflicts (such as Fn-Lock blocking `Alt+F4` from registering) by executing a primary `Alt + Space` -> `c` (system menu Close command) sequence, with a secondary fallback to `Alt + F4` if the window is still detected.
-* **Multi-Layer API Graceful Degradation**: Fetches posts from JSONPlaceholder, automatically switches to a Beeceptor mirror if blocked, and falls back to a clean mock post dataset if all network attempts fail.
-* **Pre-run Cleanup**: Sweeps the target directory on start to avoid write prompts or replacement dialog blockers.
+* **Zero-Shot Visual Grounding**: Locate any arbitrary interface element using plain-text instructions (e.g. "Find the recycle bin", "Locate the save button").
+* **Recursive Search & Focus**: Adapts the paper's multi-step visual search concept: Position Inference (Planner) $\rightarrow$ Context Dilation ($S_{min}$/$R_{max}$ padding) $\rightarrow$ Direct Grounding $\rightarrow$ Attention-based Red-box Verification.
+* **Adapted & Streamlined Flow**: Streamlines the academic paper by removing complex Non-Maximum Suppression (NMS) in favor of direct LLM confidence ranking, creating a lightweight, highly responsive Python codebase.
+* **Scale & DPI Invariance**: Automatically resolves physical pixel bounds returned by the VLM to logical OS screen coordinate clicks by comparing screenshot aspect ratios with PyAutoGUI display metrics.
+* **Transient API Resilience**: Wraps VLM API requests with a 3-attempt linear/exponential backoff retry block to safely absorb temporary network timeouts or rate limits.
+* **Hallucination Protection**: Features a 2-pass check where direct grounding verifies target presence (`found: bool`) before running verification, preventing erroneous mouse events.
 
 ---
 
@@ -21,11 +21,10 @@ This project was built to automate fetching blog posts from a REST API and writi
 
 ### Prerequisites
 * **Target OS**: Windows 10 or 11
-* **Screen Resolution**: 1920x1080 (standard layout settings)
-* **Desktop Setup**: Create or place a Notepad shortcut icon visible on the Desktop before running.
+* **Desktop Setup**: Ensure the target icon or button you want to search for is visible on your screen.
 
 ### Installation
-Sync project dependencies using `uv` (this will automatically create a virtual environment and install all packages in `pyproject.toml`, including `typer`):
+Sync project dependencies using `uv` (this will automatically create a virtual environment and install all packages in `pyproject.toml`, including `typer` and the `google-genai` SDK):
 
 ```bash
 uv sync
@@ -33,43 +32,57 @@ uv sync
 
 ---
 
-## 💻 Usage
+## 💻 Primary Tool: Generalized Grounding CLI (`ground.py`)
 
-### 1. Run in Dynamic Grounding Mode (Default)
-Captures a fresh screenshot and runs visual search to find the Notepad icon on every iteration. This is the main mode for robust automation:
+The primary entry point of the project is `ground.py`, a general-purpose command-line utility that takes a desktop screenshot, locates your requested target, translates the coordinate space, and saves a visual detection debug image.
 
-```bash
-uv run automate.py
-```
+### Usage Examples
 
-### 2. Run in Cached Testing Mode
-Locates the Notepad icon once before entering the loop. Useful for fast debugging of keyboard emulation, clipboard syncing, and directory write validations:
+1. **Locate the default Notepad shortcut icon:**
+   ```bash
+   uv run ground.py
+   ```
 
-```bash
-uv run automate.py --cache-icon
-```
+2. **Locate any custom target on your screen:**
+   ```bash
+   uv run ground.py "Chrome icon" "Find the Google Chrome shortcut icon on the desktop"
+   ```
 
-### 3. Run Grounding-Only Script (CLI Utility)
-Runs visual search to locate any target element on the screen, calculates display-scaled click coordinates, and saves an annotated screenshot to disk (without running the full Notepad loop). 
+3. **Modify search configurations (such as custom scaling ratios or max search depth):**
+   ```bash
+   uv run ground.py "Save Button" --min-size-ratio 0.2 --max-depth 4
+   ```
 
-By default, it locates the Notepad shortcut icon:
-```bash
-uv run ground_only.py
-```
+4. **View all CLI arguments and options:**
+   ```bash
+   uv run ground.py --help
+   ```
 
-To locate an **arbitrary target** and instruction, pass them as positional arguments:
-```bash
-uv run ground_only.py "Recycle Bin" "Find the Recycle Bin icon on the desktop"
-```
+---
 
-To view all available arguments and options (such as custom scaling ratios or search depths):
-```bash
-uv run ground_only.py --help
-```
+## 📝 Demo Application: Notepad Task Automation (`automate.py`)
+
+To demonstrate how `ScreenSeekeR` is used inside a live script, we provide `automate.py`. This script integrates the grounding coordinates inside a loop to perform a complete data-writing task:
+1. Minimizes all windows (`Win+D`) to expose the desktop.
+2. Dynamically locates the Notepad shortcut icon and double-clicks it to launch the app.
+3. Fetches 10 blog posts from a REST API (with Beeceptor mirror and local offline dataset fallbacks).
+4. Types the post content, copy-verifies clipboard syncing to bypass system delays, saves the text file to `~/Desktop/tjm-project/`, closes Notepad via system menu commands, and repeats.
+
+### Running the Demo
+
+* **Standard Dynamic Loop (Grounds the Notepad icon on every iteration):**
+  ```bash
+  uv run automate.py
+  ```
+
+* **Cached Coordinator Mode (Locates the icon once at startup for testing keyboard loops):**
+  ```bash
+  uv run automate.py --cache-icon
+  ```
 
 ---
 
 ## 📂 Project Outputs
 
-* **Target Directory**: Written files are saved to `~/Desktop/tjm-project/` formatted as `post_{post_id}.txt`.
-* **Annotated Detections**: Red target bounding boxes are drawn and saved under `annotated_screenshots/` with target-specific names (e.g. `grounding_Recycle_Bin_{timestamp}_{click_x}_{click_y}.png` to prevent overwriting past runs).
+* **Annotated Groundings**: Grounding results are annotated with a red boundary box and saved under `annotated_screenshots/` with target-specific names (e.g. `grounding_Chrome_icon_{timestamp}_{click_x}_{click_y}.png`).
+* **Demo Target Directory**: Files generated by the Notepad demonstration are saved under `~/Desktop/tjm-project/` formatted as `post_{post_id}.txt`.
