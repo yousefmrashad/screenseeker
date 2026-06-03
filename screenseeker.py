@@ -119,31 +119,6 @@ def normalized_to_absolute(
     return x1, y1, x2, y2
 
 
-def absolute_to_normalized(
-    box: Tuple[int, int, int, int], width: int, height: int
-) -> BoundingBox:
-    """
-    Convert absolute pixel coordinates to a normalized [0, 1000] bounding box.
-
-    Args:
-        box: Tuple of (x1, y1, x2, y2) absolute coordinates
-        width: Image width in pixels
-        height: Image height in pixels
-
-    Returns:
-        BoundingBox in normalized [0, 1000] space
-    """
-    x1, y1, x2, y2 = box
-    xmin = max(0, min(1000, int((x1 / width) * 1000)))
-    ymin = max(0, min(1000, int((y1 / height) * 1000)))
-    xmax = max(0, min(1000, int((x2 / width) * 1000)))
-    ymax = max(0, min(1000, int((y2 / height) * 1000)))
-    return BoundingBox(ymin=ymin, xmin=xmin, ymax=ymax, xmax=xmax)
-
-
-# (calculate_iou has been removed as NMS is no longer used)
-
-
 def dilate_box(
     box: Tuple[int, int, int, int],
     s_min: int,
