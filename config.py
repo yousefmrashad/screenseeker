@@ -19,6 +19,4 @@ TARGET_ELEMENT = {
     "instruction": "Find the Notepad shortcut icon on the desktop",
     "min_size_ratio": 0.25,  # Dynamic Smin scaling ratio (relative to screen size)
     "max_depth": 3,  # Maximum search recursion depth (Dmax)
-    "sigma": 0.3,  # Gaussian centrality standard deviation
-    "iou_threshold": 0.3,  # Non-Maximum Suppression (NMS) overlap threshold
 }

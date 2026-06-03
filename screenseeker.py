@@ -84,16 +84,12 @@ class ElementConfig:
         instruction: str,
         min_size_ratio: float = 0.25,
         max_depth: int = 3,
-        sigma: float = 0.3,
-        iou_threshold: float = 0.3,
         model_name: str = "gemini-3.5-flash",
     ):
         self.target_name = target_name
         self.instruction = instruction
         self.min_size_ratio = min_size_ratio
         self.max_depth = max_depth
-        self.sigma = sigma
-        self.iou_threshold = iou_threshold
         self.model_name = model_name
 
 
