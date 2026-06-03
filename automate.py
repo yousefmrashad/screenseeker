@@ -19,9 +19,7 @@ CACHE_ICON = "--cache-icon" in sys.argv
 logging.basicConfig(
     level=logging.WARNING,
     format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger("Orchestrator")
 logger.setLevel(logging.INFO)
@@ -52,7 +50,7 @@ def fetch_posts() -> list:
             return posts[:10]
         except Exception as e:
             logger.warning(f"Failed to fetch posts from {url}: {e}")
-            
+
     logger.warning("All API endpoints failed. Falling back to local mock data.")
     return [
         {
@@ -69,6 +67,7 @@ def is_notepad_open() -> bool:
     Check if any open visible window is the Windows Notepad application.
     """
     notepad_found = []
+
     def win_enum_handler(hwnd, ctx):
         if ctypes.windll.user32.IsWindowVisible(hwnd):
             pid = ctypes.c_ulong()
@@ -78,17 +77,22 @@ def is_notepad_open() -> bool:
                 try:
                     buf = ctypes.create_unicode_buffer(1024)
                     size = ctypes.c_ulong(1024)
-                    if ctypes.windll.kernel32.QueryFullProcessImageNameW(h_process, 0, buf, ctypes.byref(size)):
+                    if ctypes.windll.kernel32.QueryFullProcessImageNameW(
+                        h_process, 0, buf, ctypes.byref(size)
+                    ):
                         exe_name = os.path.basename(buf.value).lower()
                         if exe_name == "notepad.exe":
                             length = ctypes.windll.user32.GetWindowTextLengthW(hwnd)
                             buf_title = ctypes.create_unicode_buffer(length + 1)
-                            ctypes.windll.user32.GetWindowTextW(hwnd, buf_title, length + 1)
+                            ctypes.windll.user32.GetWindowTextW(
+                                hwnd, buf_title, length + 1
+                            )
                             if buf_title.value:
                                 notepad_found.append(hwnd)
                 finally:
                     ctypes.windll.kernel32.CloseHandle(h_process)
         return True
+
     try:
         EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_int, ctypes.c_int)
         ctypes.windll.user32.EnumWindows(EnumWindowsProc(win_enum_handler), 0)
@@ -98,7 +102,9 @@ def is_notepad_open() -> bool:
         return False
 
 
-def locate_notepad_icon(seeker: ScreenSeekeR, config: ElementConfig) -> Tuple[int, int, Image.Image, Tuple[int, int, int, int]]:
+def locate_notepad_icon(
+    seeker: ScreenSeekeR, config: ElementConfig
+) -> Tuple[int, int, Image.Image, Tuple[int, int, int, int]]:
     """
     Locate the Notepad icon on the desktop and return resolved logical coordinates (click_x, click_y).
     """
@@ -109,13 +115,13 @@ def locate_notepad_icon(seeker: ScreenSeekeR, config: ElementConfig) -> Tuple[in
             x1, y1, x2, y2 = icon_box
             cx = int((x1 + x2) / 2)
             cy = int((y1 + y2) / 2)
-            
+
             # Resolve scaling
             screen_w, screen_h = pyautogui.size()
             img_w, img_h = screenshot.size
             scale_x = screen_w / img_w
             scale_y = screen_h / img_h
-            
+
             return int(cx * scale_x), int(cy * scale_y), screenshot, icon_box
     except Exception as e:
         logger.error(f"Error during visual search: {e}")
@@ -127,7 +133,7 @@ def main():
     tjm_project_dir = os.path.join(desktop_path, "tjm-project")
     logger.info(f"Target saving directory: {tjm_project_dir}")
     os.makedirs(tjm_project_dir, exist_ok=True)
-    
+
     # Clean existing post files
     for f in os.listdir(tjm_project_dir):
         if f.startswith("post_") and f.endswith(".txt"):
@@ -136,7 +142,9 @@ def main():
             except Exception as e:
                 logger.warning(f"Could not remove {f}: {e}")
 
-    annotated_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "annotated_screenshots")
+    annotated_dir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "annotated_screenshots"
+    )
     os.makedirs(annotated_dir, exist_ok=True)
 
     seeker = ScreenSeekeR()
@@ -161,10 +169,14 @@ def main():
                 # Save annotated screenshot
                 draw = ImageDraw.Draw(screenshot)
                 draw.rectangle(icon_box, outline="red", width=3)
-                screenshot.save(os.path.join(annotated_dir, "annotated_screenshot_detection_cached.png"))
+                screenshot.save(
+                    os.path.join(
+                        annotated_dir, "annotated_screenshot_detection_cached.png"
+                    )
+                )
                 break
             time.sleep(1.0)
-            
+
         if cached_x is None:
             logger.error("Failed to locate Notepad icon. Exiting.")
             return
@@ -173,9 +185,9 @@ def main():
         post_id = post["id"]
         title = post["title"]
         body = post["body"]
-        
+
         logger.info(f"=== Processing Post {idx + 1}/10 (ID: {post_id}) ===")
-        
+
         # Minimize windows to expose desktop on subsequent runs or when doing dynamic searches
         if idx > 0 or not CACHE_ICON:
             pyautogui.hotkey("win", "d")
@@ -193,17 +205,24 @@ def main():
                     # Save annotated screenshot for each iteration
                     draw = ImageDraw.Draw(screenshot)
                     draw.rectangle(icon_box, outline="red", width=3)
-                    screenshot.save(os.path.join(annotated_dir, f"annotated_screenshot_detection_post_{post_id}.png"))
+                    screenshot.save(
+                        os.path.join(
+                            annotated_dir,
+                            f"annotated_screenshot_detection_post_{post_id}.png",
+                        )
+                    )
                     break
                 time.sleep(1.0)
-            
+
             if click_x is None:
-                logger.error(f"Failed to locate Notepad icon dynamically. Skipping post {post_id}.")
+                logger.error(
+                    f"Failed to locate Notepad icon dynamically. Skipping post {post_id}."
+                )
                 continue
 
         logger.info(f"Double-clicking Notepad icon at ({click_x}, {click_y})...")
         pyautogui.doubleClick(click_x, click_y)
-        
+
         # Wait for Notepad window to appear
         notepad_launched = False
         for _ in range(10):
@@ -211,7 +230,7 @@ def main():
             if is_notepad_open():
                 notepad_launched = True
                 break
-        
+
         if not notepad_launched:
             logger.error("Notepad failed to launch. Retrying double click...")
             pyautogui.doubleClick(click_x, click_y)
@@ -225,13 +244,13 @@ def main():
         # Type content
         post_content = f"Title: {title}\n\n{body}"
         pyperclip.copy(post_content)
-        
+
         # Verify clipboard synchronization to prevent OS/clipboard-history races
         for _ in range(15):
             if pyperclip.paste() == post_content:
                 break
             time.sleep(0.1)
-            
+
         time.sleep(0.2)
         pyautogui.hotkey("ctrl", "v")
         time.sleep(0.5)
@@ -242,15 +261,15 @@ def main():
         logger.info(f"Saving file as {file_path}...")
         pyautogui.hotkey("ctrl", "s")
         time.sleep(1.5)
-        
+
         pyperclip.copy(file_path)
-        
+
         # Verify clipboard synchronization
         for _ in range(15):
             if pyperclip.paste() == file_path:
                 break
             time.sleep(0.1)
-            
+
         time.sleep(0.2)
         pyautogui.hotkey("ctrl", "v")
         time.sleep(0.5)
@@ -262,7 +281,7 @@ def main():
         pyautogui.hotkey("alt", "space")
         time.sleep(0.3)
         pyautogui.press("c")
-        
+
         # Verify closed, fallback to Alt+F4 if still open
         notepad_closed = False
         for _ in range(4):
@@ -270,9 +289,11 @@ def main():
             if not is_notepad_open():
                 notepad_closed = True
                 break
-        
+
         if not notepad_closed:
-            logger.warning("Notepad failed to close via Alt+Space. Trying Alt+F4 fallback...")
+            logger.warning(
+                "Notepad failed to close via Alt+Space. Trying Alt+F4 fallback..."
+            )
             pyautogui.hotkey("alt", "f4")
             for _ in range(4):
                 time.sleep(0.5)

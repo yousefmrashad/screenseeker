@@ -14,26 +14,25 @@ app = typer.Typer(add_completion=False)
 @app.command()
 def main(
     target_name: str = typer.Argument(
-        "Notepad icon",
-        help="Name of the target element (e.g. 'Notepad icon')"
+        "Notepad icon", help="Name of the target element (e.g. 'Notepad icon')"
     ),
     instruction: str = typer.Argument(
         "Find the Notepad shortcut icon on the desktop",
-        help="Grounding instruction (e.g. 'Find the Notepad shortcut icon on the desktop')"
+        help="Grounding instruction (e.g. 'Find the Notepad shortcut icon on the desktop')",
     ),
     min_size_ratio: float = typer.Option(
         0.25,
         "--min-size-ratio",
-        help="Dynamic Smin scaling ratio (relative to screen size)"
+        help="Dynamic Smin scaling ratio (relative to screen size)",
     ),
     max_depth: int = typer.Option(
-        3,
-        "--max-depth",
-        help="Maximum search recursion depth"
-    )
+        3, "--max-depth", help="Maximum search recursion depth"
+    ),
 ) -> None:
     # Setup directories
-    annotated_dir: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), "annotated_screenshots")
+    annotated_dir: str = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "annotated_screenshots"
+    )
     os.makedirs(annotated_dir, exist_ok=True)
 
     print(f"Initializing ScreenSeekeR visual grounding agent...")
@@ -42,7 +41,7 @@ def main(
         target_name=target_name,
         instruction=instruction,
         min_size_ratio=min_size_ratio,
-        max_depth=max_depth
+        max_depth=max_depth,
     )
 
     print("Taking desktop screenshot...")
@@ -58,7 +57,10 @@ def main(
         return
 
     if icon_box is None:
-        print(f"[-] '{elem_config.target_name}' not found on the desktop.", file=sys.stderr)
+        print(
+            f"[-] '{elem_config.target_name}' not found on the desktop.",
+            file=sys.stderr,
+        )
         return
 
     # Compute coordinates
@@ -86,7 +88,9 @@ def main(
 
     # Save with unique name to prevent overwriting previous detections
     timestamp: str = time.strftime("%Y%m%d_%H%M%S")
-    sanitized_target: str = "".join(c if c.isalnum() else "_" for c in target_name).strip("_")
+    sanitized_target: str = "".join(
+        c if c.isalnum() else "_" for c in target_name
+    ).strip("_")
     filename: str = f"grounding_{sanitized_target}_{timestamp}_{click_x}_{click_y}.png"
     output_path: str = os.path.join(annotated_dir, filename)
     screenshot.save(output_path)

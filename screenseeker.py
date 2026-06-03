@@ -18,6 +18,7 @@ logger.setLevel(logging.INFO)
 # Pydantic Schemas for Structured JSON Output
 # =====================================================================
 
+
 class BoundingBox(BaseModel):
     ymin: int = Field(description="Top coordinate normalized to [0, 1000]")
     xmin: int = Field(description="Left coordinate normalized to [0, 1000]")
@@ -26,32 +27,54 @@ class BoundingBox(BaseModel):
 
 
 class GroundingResult(BaseModel):
-    reasoning: str = Field(description="Visual reasoning leading to the target location.")
-    found: bool = Field(description="True if the target is found on the screen, False otherwise.")
-    box: Optional[BoundingBox] = Field(default=None, description="The normalized bounding box enclosing the target. Must be provided if found is True.")
+    reasoning: str = Field(
+        description="Visual reasoning leading to the target location."
+    )
+    found: bool = Field(
+        description="True if the target is found on the screen, False otherwise."
+    )
+    box: Optional[BoundingBox] = Field(
+        default=None,
+        description="The normalized bounding box enclosing the target. Must be provided if found is True.",
+    )
 
 
 class VerificationResult(BaseModel):
     reasoning: str = Field(description="Analysis of the marked element in the red box.")
-    result: str = Field(description="Must be one of 'is_target', 'target_elsewhere', or 'target_not_found'.")
-    new_instruction: Optional[str] = Field(default=None, description="A clearer instruction if the target exists.")
+    result: str = Field(
+        description="Must be one of 'is_target', 'target_elsewhere', or 'target_not_found'."
+    )
+    new_instruction: Optional[str] = Field(
+        default=None, description="A clearer instruction if the target exists."
+    )
 
 
 class CandidateTarget(BaseModel):
-    name: str = Field(description="Name or description of the candidate target (e.g. 'Notepad shortcut icon').")
-    reasoning: str = Field(description="Visual reasoning explaining why this matches or differs from the target description (e.g. 'This is Notepad, not Notepad++').")
-    box: BoundingBox = Field(description="Normalized bounding box [ymin, xmin, ymax, xmax] of the candidate target.")
-    confidence: float = Field(description="Confidence score [0.0 to 1.0] that this matches the target description.")
+    name: str = Field(
+        description="Name or description of the candidate target (e.g. 'Notepad shortcut icon')."
+    )
+    reasoning: str = Field(
+        description="Visual reasoning explaining why this matches or differs from the target description (e.g. 'This is Notepad, not Notepad++')."
+    )
+    box: BoundingBox = Field(
+        description="Normalized bounding box [ymin, xmin, ymax, xmax] of the candidate target."
+    )
+    confidence: float = Field(
+        description="Confidence score [0.0 to 1.0] that this matches the target description."
+    )
 
 
 class PlannerOutput(BaseModel):
     reasoning: str = Field(description="Step by step visual layout analysis.")
-    candidates: List[CandidateTarget] = Field(description="List of potential targets found on the screen, ordered by confidence.")
+    candidates: List[CandidateTarget] = Field(
+        description="List of potential targets found on the screen, ordered by confidence."
+    )
 
 
 # =====================================================================
 # Core Configuration
 # =====================================================================
+
 
 class ElementConfig:
     """Configuration class for the target UI element search."""
@@ -64,7 +87,7 @@ class ElementConfig:
         max_depth: int = config.TARGET_ELEMENT["max_depth"],
         sigma: float = config.TARGET_ELEMENT["sigma"],
         iou_threshold: float = config.TARGET_ELEMENT["iou_threshold"],
-        model_name: str = config.MODEL_NAME
+        model_name: str = config.MODEL_NAME,
     ):
         self.target_name = target_name
         self.instruction = instruction
@@ -75,15 +98,14 @@ class ElementConfig:
         self.model_name = model_name
 
 
-
-
-
-
 # =====================================================================
 # Math & Coordinate Helpers
 # =====================================================================
 
-def normalized_to_absolute(box: BoundingBox, width: int, height: int) -> Tuple[int, int, int, int]:
+
+def normalized_to_absolute(
+    box: BoundingBox, width: int, height: int
+) -> Tuple[int, int, int, int]:
     """
     Convert a normalized [0, 1000] bounding box to absolute pixel coordinates.
 
@@ -102,7 +124,9 @@ def normalized_to_absolute(box: BoundingBox, width: int, height: int) -> Tuple[i
     return x1, y1, x2, y2
 
 
-def absolute_to_normalized(box: Tuple[int, int, int, int], width: int, height: int) -> BoundingBox:
+def absolute_to_normalized(
+    box: Tuple[int, int, int, int], width: int, height: int
+) -> BoundingBox:
     """
     Convert absolute pixel coordinates to a normalized [0, 1000] bounding box.
 
@@ -130,7 +154,7 @@ def dilate_box(
     s_min: int,
     r_max: int,
     img_width: int,
-    img_height: int
+    img_height: int,
 ) -> Tuple[int, int, int, int]:
     """
     Expand/dilate a bounding box (patch) to ensure context padding.
@@ -182,6 +206,7 @@ def dilate_box(
 # Main ScreenSeekeR Class
 # =====================================================================
 
+
 class ScreenSeekeR:
     """The main visual search and grounding orchestration framework."""
 
@@ -194,7 +219,9 @@ class ScreenSeekeR:
         """
         self.client = genai.Client(api_key=api_key)
 
-    def position_inference(self, image: Image.Image, config: ElementConfig) -> List[CandidateTarget]:
+    def position_inference(
+        self, image: Image.Image, config: ElementConfig
+    ) -> List[CandidateTarget]:
         """
         Execute Step 8 of the algorithm: POSITIONINFERENCE(T, I).
 
@@ -224,20 +251,26 @@ Prioritize the top candidate in the list."""
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema=PlannerOutput,
-                    media_resolution="MEDIA_RESOLUTION_MEDIUM"
-                )
+                    media_resolution="MEDIA_RESOLUTION_MEDIUM",
+                ),
             )
             result: PlannerOutput = response.parsed
             logger.info(f"Planner Reasoning: {result.reasoning}")
             for i, c in enumerate(result.candidates):
-                logger.info(f"Candidate {i}: '{c.name}' (Confidence: {c.confidence}) box: {c.box}")
-                
+                logger.info(
+                    f"Candidate {i}: '{c.name}' (Confidence: {c.confidence}) box: {c.box}"
+                )
+
             return result.candidates
         except Exception as e:
-            logger.error(f"Planner position inference failed due to API/network error: {e}. Returning empty candidate list to force fallback.")
+            logger.error(
+                f"Planner position inference failed due to API/network error: {e}. Returning empty candidate list to force fallback."
+            )
             return []
 
-    def direct_grounding(self, image: Image.Image, config: ElementConfig) -> Optional[Tuple[int, int, int, int]]:
+    def direct_grounding(
+        self, image: Image.Image, config: ElementConfig
+    ) -> Optional[Tuple[int, int, int, int]]:
         """
         Execute Step 6: DIRECTGROUNDING(I, viewport).
 
@@ -259,23 +292,24 @@ Describe its location and state. If it exists on the screen, set 'found' to true
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=GroundingResult,
-                media_resolution="MEDIA_RESOLUTION_HIGH"
-            )
+                media_resolution="MEDIA_RESOLUTION_HIGH",
+            ),
         )
         result: GroundingResult = response.parsed
         if not result.found or result.box is None:
-            logger.info(f"Direct Grounding failed: Target not found. Reasoning: {result.reasoning}")
+            logger.info(
+                f"Direct Grounding failed: Target not found. Reasoning: {result.reasoning}"
+            )
             return None
-            
+
         abs_box = normalized_to_absolute(result.box, image.width, image.height)
-        logger.info(f"Direct Grounding Result: {abs_box} (Reasoning: {result.reasoning})")
+        logger.info(
+            f"Direct Grounding Result: {abs_box} (Reasoning: {result.reasoning})"
+        )
         return abs_box
 
     def verify_prediction(
-        self,
-        image: Image.Image,
-        box: Tuple[int, int, int, int],
-        config: ElementConfig
+        self, image: Image.Image, box: Tuple[int, int, int, int], config: ElementConfig
     ) -> bool:
         """
         Verify if the predicted bounding box contains the target element.
@@ -293,21 +327,21 @@ Describe its location and state. If it exists on the screen, set 'found' to true
         w, h = x2 - x1, y2 - y1
         margin_x = int(w * 0.2)
         margin_y = int(h * 0.2)
-        
+
         crop_x1 = max(0, x1 - margin_x)
         crop_y1 = max(0, y1 - margin_y)
         crop_x2 = min(image.width, x2 + margin_x)
         crop_y2 = min(image.height, y2 + margin_y)
-        
+
         crop_img = image.crop((crop_x1, crop_y1, crop_x2, crop_y2))
-        
+
         # Draw a red bounding box around the target relative to the crop
         draw_img = crop_img.copy()
         draw = ImageDraw.Draw(draw_img)
         draw.rectangle(
             [x1 - crop_x1, y1 - crop_y1, x2 - crop_x1, y2 - crop_y1],
             outline="red",
-            width=2
+            width=2,
         )
 
         prompt = f"""You are given a cropped screenshot. Your task is to evaluate whether the marked element in the red box matches the target described in my instruction.
@@ -333,21 +367,20 @@ Here is my instruction:
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema=VerificationResult,
-                    media_resolution="MEDIA_RESOLUTION_HIGH"
-                )
+                    media_resolution="MEDIA_RESOLUTION_HIGH",
+                ),
             )
             verification: VerificationResult = response.parsed
-            logger.info(f"Verification Decision: {verification.result} (Reason: {verification.reasoning})")
+            logger.info(
+                f"Verification Decision: {verification.result} (Reason: {verification.reasoning})"
+            )
             return verification.result == "is_target"
         except Exception as e:
             logger.error(f"Verification failed: {e}. Defaulting to True to try action.")
             return True
 
     def visual_search(
-        self,
-        image: Image.Image,
-        config: ElementConfig,
-        depth: int = 0
+        self, image: Image.Image, config: ElementConfig, depth: int = 0
     ) -> Optional[Tuple[int, int, int, int]]:
         """
         Execute recursive visual search (Algorithm 1 ScreenSeekeR).
@@ -377,7 +410,7 @@ Here is my instruction:
 
         # Step 8: POSITIONINFERENCE - Planner identifies candidate bounding boxes directly
         candidates = self.position_inference(image, config)
-        
+
         if not candidates:
             logger.info("No candidates proposed by planner. Running direct grounding.")
             box = self.direct_grounding(image, config)
@@ -403,26 +436,21 @@ Here is my instruction:
         for patch in sorted_patches:
             px1, py1, px2, py2 = patch
             pw, ph = px2 - px1, py2 - py1
-            
+
             # Prevent cropping the entire image repeatedly to avoid infinite recursion
             if pw >= img_w * 0.95 and ph >= img_h * 0.95:
                 continue
 
             logger.info(f"Cropping region {patch} and recursing...")
             sub_image = image.crop((px1, py1, px2, py2))
-            
+
             # Recurse
             res_box = self.visual_search(sub_image, config, depth + 1)
-            
+
             if res_box is not None:
                 # Project coordinates back to parent image coordinate space
                 rx1, ry1, rx2, ry2 = res_box
-                parent_box = (
-                    px1 + rx1,
-                    py1 + ry1,
-                    px1 + rx2,
-                    py1 + ry2
-                )
+                parent_box = (px1 + rx1, py1 + ry1, px1 + rx2, py1 + ry2)
                 logger.info(f"Found target bounding box: {parent_box}")
                 return parent_box
 

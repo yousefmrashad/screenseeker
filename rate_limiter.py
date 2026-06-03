@@ -11,10 +11,12 @@ import config
 logger = logging.getLogger("RateLimiter")
 logger.setLevel(logging.INFO)
 
+
 class TokenBucketLimiter:
     """
     A thread-safe implementation of the Token Bucket rate limiting algorithm.
     """
+
     def __init__(self, capacity: float, refill_rate_per_sec: float):
         self.capacity = capacity
         self.refill_rate = refill_rate_per_sec
@@ -40,10 +42,12 @@ class TokenBucketLimiter:
                 return False
             needed = tokens_to_consume - self.tokens
             sleep_duration = needed / self.refill_rate
-            
-        logger.warning(f"Rate limit reached. Sleeping for {sleep_duration:.2f}s to refill tokens...")
+
+        logger.warning(
+            f"Rate limit reached. Sleeping for {sleep_duration:.2f}s to refill tokens..."
+        )
         time.sleep(sleep_duration)
-        
+
         with self.lock:
             self._refill()
             if self.tokens >= tokens_to_consume:
@@ -56,19 +60,22 @@ class TokenBucketLimiter:
 
 def rate_limited(limiter: TokenBucketLimiter):
     """Decorator to enforce token bucket rate limiting on any function or method."""
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             limiter.consume(1.0, block=True)
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
 # Default rate limiter loaded from config
 default_limiter = TokenBucketLimiter(
     capacity=config.RATE_LIMIT_CAPACITY,
-    refill_rate_per_sec=config.RATE_LIMIT_RPM / 60.0
+    refill_rate_per_sec=config.RATE_LIMIT_RPM / 60.0,
 )
 
 
@@ -77,20 +84,18 @@ def generate_content_limited(
     client: client.Client,
     model: str,
     contents: List[Any],
-    config: Optional[types.GenerateContentConfig] = None
+    config: Optional[types.GenerateContentConfig] = None,
 ) -> types.GenerateContentResponse:
     """
     Invokes the Gemini API generate_content method with robust error handling and retries.
-    This is the only function in the application that performs the network request 
+    This is the only function in the application that performs the network request
     and it contains no other bounded operations.
     """
     max_retries = 3
     for attempt in range(max_retries):
         try:
             return client.models.generate_content(
-                model=model,
-                contents=contents,
-                config=config
+                model=model, contents=contents, config=config
             )
         except Exception as e:
             logger.warning(
