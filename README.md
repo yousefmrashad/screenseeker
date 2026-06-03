@@ -25,13 +25,11 @@ This project was built to automate fetching blog posts from a REST API and writi
 * **Desktop Setup**: Create or place a Notepad shortcut icon visible on the Desktop before running.
 
 ### Installation
-Ensure you have the required dependencies installed using `uv`:
+Sync project dependencies using `uv` (this will automatically create a virtual environment and install all packages in `pyproject.toml`, including `typer`):
 
 ```bash
-uv pip install pyautogui pyperclip requests pillow
+uv sync
 ```
-
-Ensure the grounding package `screenseeker` is correctly configured in your Python path.
 
 ---
 
