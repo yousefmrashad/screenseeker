@@ -219,11 +219,18 @@ def main():
                 logger.error("Notepad still closed. Skipping post.")
                 continue
 
-        time.sleep(1.0)  # Wait for focus to stabilize
+        time.sleep(1.5)  # Wait for focus to stabilize
 
         # Type content
         post_content = f"Title: {title}\n\n{body}"
         pyperclip.copy(post_content)
+        
+        # Verify clipboard synchronization to prevent OS/clipboard-history races
+        for _ in range(15):
+            if pyperclip.paste() == post_content:
+                break
+            time.sleep(0.1)
+            
         time.sleep(0.2)
         pyautogui.hotkey("ctrl", "v")
         time.sleep(0.5)
@@ -236,6 +243,13 @@ def main():
         time.sleep(1.5)
         
         pyperclip.copy(file_path)
+        
+        # Verify clipboard synchronization
+        for _ in range(15):
+            if pyperclip.paste() == file_path:
+                break
+            time.sleep(0.1)
+            
         time.sleep(0.2)
         pyautogui.hotkey("ctrl", "v")
         time.sleep(0.5)
