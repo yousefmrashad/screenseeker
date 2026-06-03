@@ -51,11 +51,22 @@ Locates the Notepad icon once before entering the loop. Useful for fast debuggin
 uv run automate.py --cache-icon
 ```
 
-### 3. Run Grounding-Only Script
-Performs *only* the visual search to locate the Notepad icon on the desktop, calculates display-scaled click coordinates, and saves an annotated screenshot—without invoking the Notepad automation loop. This is useful for capturing the required 3 position screenshots (top-left, bottom-right, center):
+### 3. Run Grounding-Only Script (CLI Utility)
+Runs visual search to locate any target element on the screen, calculates display-scaled click coordinates, and saves an annotated screenshot to disk (without running the full Notepad loop). 
 
+By default, it locates the Notepad shortcut icon:
 ```bash
 uv run ground_only.py
+```
+
+To locate an **arbitrary target** and instruction, pass them as positional arguments:
+```bash
+uv run ground_only.py "Recycle Bin" "Find the Recycle Bin icon on the desktop"
+```
+
+To view all available arguments and options (such as custom scaling ratios or search depths):
+```bash
+uv run ground_only.py --help
 ```
 
 ---
@@ -63,4 +74,4 @@ uv run ground_only.py
 ## 📂 Project Outputs
 
 * **Target Directory**: Written files are saved to `~/Desktop/tjm-project/` formatted as `post_{post_id}.txt`.
-* **Annotated Detections**: Detection bounding boxes are drawn and saved in the `annotated_screenshots/` folder (formatted as `grounding_detection_{timestamp}_{click_x}_{click_y}.png` to prevent overwriting past runs).
+* **Annotated Detections**: Red target bounding boxes are drawn and saved under `annotated_screenshots/` with target-specific names (e.g. `grounding_Recycle_Bin_{timestamp}_{click_x}_{click_y}.png` to prevent overwriting past runs).
