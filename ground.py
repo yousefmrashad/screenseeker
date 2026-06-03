@@ -7,6 +7,7 @@ import typer
 from PIL import Image, ImageDraw
 
 from screenseeker import ElementConfig, ScreenSeekeR
+import config as app_config
 
 app = typer.Typer(add_completion=False)
 
@@ -42,6 +43,7 @@ def main(
         instruction=instruction,
         min_size_ratio=min_size_ratio,
         max_depth=max_depth,
+        model_name=app_config.MODEL_NAME,
     )
 
     print("Taking desktop screenshot...")

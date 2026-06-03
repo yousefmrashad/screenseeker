@@ -7,7 +7,6 @@ from google.genai import types
 from PIL import Image, ImageDraw
 from pydantic import BaseModel, Field
 
-import config
 from rate_limiter import generate_content_limited
 
 logger = logging.getLogger("ScreenSeekeR")
@@ -81,13 +80,13 @@ class ElementConfig:
 
     def __init__(
         self,
-        target_name: str = config.TARGET_ELEMENT["target_name"],
-        instruction: str = config.TARGET_ELEMENT["instruction"],
-        min_size_ratio: float = config.TARGET_ELEMENT["min_size_ratio"],
-        max_depth: int = config.TARGET_ELEMENT["max_depth"],
-        sigma: float = config.TARGET_ELEMENT["sigma"],
-        iou_threshold: float = config.TARGET_ELEMENT["iou_threshold"],
-        model_name: str = config.MODEL_NAME,
+        target_name: str,
+        instruction: str,
+        min_size_ratio: float = 0.25,
+        max_depth: int = 3,
+        sigma: float = 0.3,
+        iou_threshold: float = 0.3,
+        model_name: str = "gemini-3.5-flash",
     ):
         self.target_name = target_name
         self.instruction = instruction

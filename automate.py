@@ -11,6 +11,7 @@ import requests
 from PIL import Image, ImageDraw
 
 from screenseeker import ElementConfig, ScreenSeekeR
+import config as app_config
 
 # Configuration Flags
 CACHE_ICON = "--cache-icon" in sys.argv
@@ -148,7 +149,15 @@ def main():
     os.makedirs(annotated_dir, exist_ok=True)
 
     seeker = ScreenSeekeR()
-    config = ElementConfig()
+    config = ElementConfig(
+        target_name=app_config.TARGET_ELEMENT["target_name"],
+        instruction=app_config.TARGET_ELEMENT["instruction"],
+        min_size_ratio=app_config.TARGET_ELEMENT["min_size_ratio"],
+        max_depth=app_config.TARGET_ELEMENT["max_depth"],
+        sigma=app_config.TARGET_ELEMENT["sigma"],
+        iou_threshold=app_config.TARGET_ELEMENT["iou_threshold"],
+        model_name=app_config.MODEL_NAME,
+    )
     posts = fetch_posts()
 
     pyautogui.FAILSAFE = True
