@@ -224,7 +224,8 @@ Prioritize the top candidate in the list."""
             contents=[image, prompt],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                response_schema=PlannerOutput
+                response_schema=PlannerOutput,
+                media_resolution="MEDIUM"
             )
         )
         
@@ -256,7 +257,8 @@ Return its exact bounding box coordinates normalized to [0, 1000]."""
             contents=[image, prompt],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                response_schema=GroundingResult
+                response_schema=GroundingResult,
+                media_resolution="HIGH"
             )
         )
         result: GroundingResult = response.parsed
@@ -325,7 +327,8 @@ Here is my instruction:
                 contents=[draw_img, prompt],
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
-                    response_schema=VerificationResult
+                    response_schema=VerificationResult,
+                    media_resolution="HIGH"
                 )
             )
             verification: VerificationResult = response.parsed
