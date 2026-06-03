@@ -1,7 +1,6 @@
 import logging
 import math
-import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from google import genai
 from google.genai import types
@@ -194,8 +193,6 @@ class ScreenSeekeR:
         """
         self.client = genai.Client(api_key=api_key)
 
-
-
     def position_inference(self, image: Image.Image, config: ElementConfig) -> List[CandidateTarget]:
         """
         Execute Step 8 of the algorithm: POSITIONINFERENCE(T, I).
@@ -225,7 +222,7 @@ Prioritize the top candidate in the list."""
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=PlannerOutput,
-                media_resolution="MEDIUM"
+                media_resolution="MEDIA_RESOLUTION_MEDIUM"
             )
         )
         
@@ -258,7 +255,7 @@ Return its exact bounding box coordinates normalized to [0, 1000]."""
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=GroundingResult,
-                media_resolution="HIGH"
+                media_resolution="MEDIA_RESOLUTION_HIGH"
             )
         )
         result: GroundingResult = response.parsed
@@ -328,7 +325,7 @@ Here is my instruction:
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema=VerificationResult,
-                    media_resolution="HIGH"
+                    media_resolution="MEDIA_RESOLUTION_HIGH"
                 )
             )
             verification: VerificationResult = response.parsed
