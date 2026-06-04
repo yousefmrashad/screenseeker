@@ -16,7 +16,7 @@ This repository provides a primary command-line grounding tool (`ground.py`) and
 ## 🚀 Key Features
 
 * **Zero-Shot Visual Grounding**: Locate any arbitrary interface element using plain-text instructions (e.g. "Find the recycle bin", "Locate the save button").
-* **Recursive Search & Focus**: Adapts the paper's multi-step visual search concept: Position Inference (Planner) $\rightarrow$ Context Dilation ($S_{min}$/$R_{max}$ padding) $\rightarrow$ Direct Grounding $\rightarrow$ Attention-based Red-box Verification.
+* **Recursive Search & Focus**: Adapts the paper's multi-step visual search concept: Position Inference (Planner) $\rightarrow$ Context Dilation ($S_{min}$ / $R_{max}$ padding) $\rightarrow$ Direct Grounding $\rightarrow$ Attention-based Red-box Verification.
 * **Adapted & Streamlined Flow**: Streamlines the academic paper by removing complex Non-Maximum Suppression (NMS) in favor of direct LLM confidence ranking, creating a lightweight, highly responsive Python codebase.
 * **Scale & DPI Invariance**: Automatically resolves physical pixel bounds returned by the VLM to logical OS screen coordinate clicks by comparing screenshot aspect ratios with PyAutoGUI display metrics.
 * **Transient API Resilience**: Wraps VLM API requests with a 3-attempt linear/exponential backoff retry block to safely absorb temporary network timeouts or rate limits.
@@ -69,7 +69,7 @@ The primary entry point of the project is `ground.py`, a general-purpose command
 
 ## 📝 Demo Application: Notepad Task Automation (`automate.py`)
 
-To demonstrate how `ScreenSeekeR` is used inside a live script, we provide `automate.py`. This script integrates the grounding coordinates inside a loop to perform a complete data-writing task:
+To demonstrate how `ScreenSeekeR` is used inside a live script, `automate.py` integrates the grounding coordinates inside a loop to perform a complete data-writing task:
 1. Minimizes all windows (`Win+D`) to expose the desktop.
 2. Dynamically locates the Notepad shortcut icon and double-clicks it to launch the app.
 3. Fetches 10 blog posts from a REST API (with Beeceptor mirror and local offline dataset fallbacks).

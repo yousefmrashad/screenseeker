@@ -1,7 +1,7 @@
 [project]
 name = "screenseeker"
 version = "0.1.0"
-description = "Add your description here"
+description = "Zero-shot recursive visual grounding CLI utilizing Gemini 3.5 Flash, with a specific demonstration for desktop icon automation."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
