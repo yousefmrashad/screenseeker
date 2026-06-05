@@ -6,8 +6,8 @@ import pyautogui
 import typer
 from PIL import Image, ImageDraw
 
-from screenseeker import ElementConfig, ScreenSeekeR
 import config as app_config
+from screenseeker import ElementConfig, ScreenSeekeR
 
 app = typer.Typer(add_completion=False)
 
@@ -36,7 +36,7 @@ def main(
     )
     os.makedirs(annotated_dir, exist_ok=True)
 
-    print(f"Initializing ScreenSeekeR visual grounding agent...")
+    print("Initializing ScreenSeekeR visual grounding agent...")
     seeker: ScreenSeekeR = ScreenSeekeR()
     elem_config: ElementConfig = ElementConfig(
         target_name=target_name,
@@ -97,7 +97,7 @@ def main(
     output_path: str = os.path.join(annotated_dir, filename)
     screenshot.save(output_path)
 
-    print(f"[+] Saved annotated screenshot to:")
+    print("[+] Saved annotated screenshot to:")
     print(f"    {output_path}")
 
 

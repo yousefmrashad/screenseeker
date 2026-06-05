@@ -140,8 +140,6 @@ def dilate_box(
         Tuple of (x1_d, y1_d, x2_d, y2_d) dilated coordinates
     """
     x1, y1, x2, y2 = box
-    w = x2 - x1
-    h = y2 - y1
 
     # Apply base padding (r_max)
     x1_d = x1 - r_max
@@ -344,6 +342,10 @@ Here is my instruction:
             logger.info(
                 f"Verification Decision: {verification.result} (Reason: {verification.reasoning})"
             )
+            if verification.new_instruction:
+                logger.info(
+                    f"Refined Search Instruction Suggestion: '{verification.new_instruction}'"
+                )
             return verification.result == "is_target"
         except Exception as e:
             logger.error(f"Verification failed: {e}. Defaulting to True to try action.")

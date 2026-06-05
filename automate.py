@@ -10,8 +10,8 @@ import pyperclip
 import requests
 from PIL import Image, ImageDraw
 
-from screenseeker import ElementConfig, ScreenSeekeR
 import config as app_config
+from screenseeker import ElementConfig, ScreenSeekeR
 
 # Configuration Flags
 CACHE_ICON = "--cache-icon" in sys.argv
@@ -169,7 +169,7 @@ def main():
     cached_x, cached_y = None, None
     if CACHE_ICON:
         logger.info("Locating Notepad icon once before the loop...")
-        for attempt in range(3):
+        for _ in range(3):
             click_x, click_y, screenshot, icon_box = locate_notepad_icon(seeker, config)
             if click_x is not None:
                 cached_x, cached_y = click_x, click_y
@@ -205,7 +205,7 @@ def main():
         else:
             # Dynamic search: locate icon on every iteration
             click_x, click_y = None, None
-            for attempt in range(3):
+            for _ in range(3):
                 cx, cy, screenshot, icon_box = locate_notepad_icon(seeker, config)
                 if cx is not None:
                     click_x, click_y = cx, cy
