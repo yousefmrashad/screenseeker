@@ -131,15 +131,15 @@ def locate_notepad_icon(
 
 def main():
     desktop_path = get_desktop_path()
-    tjm_project_dir = os.path.join(desktop_path, "tjm-project")
-    logger.info(f"Target saving directory: {tjm_project_dir}")
-    os.makedirs(tjm_project_dir, exist_ok=True)
+    output_dir = os.path.join(desktop_path, "screenseeker-demo")
+    logger.info(f"Target saving directory: {output_dir}")
+    os.makedirs(output_dir, exist_ok=True)
 
     # Clean existing post files
-    for f in os.listdir(tjm_project_dir):
+    for f in os.listdir(output_dir):
         if f.startswith("post_") and f.endswith(".txt"):
             try:
-                os.remove(os.path.join(tjm_project_dir, f))
+                os.remove(os.path.join(output_dir, f))
             except Exception as e:
                 logger.warning(f"Could not remove {f}: {e}")
 
@@ -264,7 +264,7 @@ def main():
 
         # Save file
         filename = f"post_{post_id}.txt"
-        file_path = os.path.join(tjm_project_dir, filename)
+        file_path = os.path.join(output_dir, filename)
         logger.info(f"Saving file as {file_path}...")
         pyautogui.hotkey("ctrl", "s")
         time.sleep(1.5)
