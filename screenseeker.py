@@ -171,6 +171,30 @@ def dilate_box(
 
 
 # =====================================================================
+# Helper Functions
+# =====================================================================
+
+
+def load_and_format_prompt(path: str, **kwargs) -> str:
+    """
+    Load a prompt template from a file and format it with the provided variables.
+
+    Args:
+        path: The path to the prompt file.
+        **kwargs: Variables to format the prompt template.
+
+    Returns:
+        The stripped and formatted prompt string.
+    """
+    try:
+        with open(path, "r") as f:
+            return f.read().strip().format(**kwargs)
+    except FileNotFoundError:
+        logger.error(f"Prompt file not found: {path}. Exiting.")
+        exit(1)
+
+
+# =====================================================================
 # Main ScreenSeekeR Class
 # =====================================================================
 
@@ -200,15 +224,7 @@ class ScreenSeekeR:
         Returns:
             List of CandidateTarget objects with confidence values
         """
-        prompt = f"""You are the Planner. Analyze the screenshot and identify all potential matches for the target: '{config.target_name}' based on the instruction: '{config.instruction}'.
-If there are multiple potential matches (e.g. similar looking icons, or variants like '{config.target_name}' vs other similar names/variants), locate all of them.
-
-For each candidate:
-1. Provide its bounding box [ymin, xmin, ymax, xmax] in normalized coordinates [0, 1000].
-2. Provide a visual reasoning explaining why it matches or differs from the target description (e.g. explain which one is the exact match and why).
-3. Assign a confidence score between 0.0 and 1.0 indicating how likely it matches the target description.
-
-Prioritize the top candidate in the list."""
+        prompt = load_and_format_prompt("prompts/position_inference.md", config=config)
 
         logger.info("Executing POSITIONINFERENCE with Planner (Structured Output)...")
         try:
@@ -249,8 +265,7 @@ Prioritize the top candidate in the list."""
         Returns:
             Tuple of (x1, y1, x2, y2) absolute coordinates of target if found, or None.
         """
-        prompt = f"""You are the Grounding model. Find the target element on the screen: '{config.target_name}'
-Describe its location and state. If it exists on the screen, set 'found' to true and return its exact bounding box coordinates normalized to [0, 1000]. If it is not present, set 'found' to false and omit 'box'."""
+        prompt = load_and_format_prompt("prompts/direct_grounding.md", config=config)
 
         logger.info("Executing DIRECTGROUNDING on crop...")
         response = generate_content_limited(
@@ -312,19 +327,7 @@ Describe its location and state. If it exists on the screen, set 'found' to true
             width=2,
         )
 
-        prompt = f"""You are given a cropped screenshot. Your task is to evaluate whether the marked element in the red box matches the target described in my instruction.
-Please follow these steps:
-1. Analyze the screenshot by describing its visible content and functionalities.
-2. Determine which of the following applies:
-- 'is_target': The marked element is the target.
-- 'target_elsewhere': The marked element is not the target, but it exists elsewhere.
-- 'target_not_found': The marked element is not the target, and it does not exist.
-3. If the target exists, rewrite the instruction to make it clearer.
-
-After your analysis, provide the result in JSON format matching the schema.
-
-Here is my instruction:
-{config.instruction}"""
+        prompt = load_and_format_prompt("prompts/verify_prediction.md", config=config)
 
         logger.info("Executing verification check...")
         try:
@@ -400,7 +403,7 @@ Here is my instruction:
 
         # Sort candidates descending by confidence score
         candidate_patches.sort(key=lambda x: x[1], reverse=True)
-        sorted_patches = [patch for patch, score in candidate_patches]
+        sorted_patches = [patch for patch, _ in candidate_patches]
 
         logger.info(f"Ranked search patches: {sorted_patches}")
 
@@ -426,5 +429,11 @@ Here is my instruction:
                 logger.info(f"Found target bounding box: {parent_box}")
                 return parent_box
 
-        # Step 21: return None if all search branches fail
+        # Step 21: all patches skipped or failed, try direct grounding as last resort
+        logger.info(
+            "All patches exhausted. Falling back to direct grounding on full image."
+        )
+        box = self.direct_grounding(image, config)
+        if box is not None and self.verify_prediction(image, box, config):
+            return box
         return None
