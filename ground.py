@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import time
@@ -8,6 +9,14 @@ from PIL import Image, ImageDraw
 
 import config as app_config
 from screenseeker import ElementConfig, ScreenSeekeR
+
+# Configure logging: Root logger to WARNING to suppress third-party loggers
+logging.basicConfig(
+    level=logging.WARNING,
+    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+logger = logging.getLogger("GroundingCLI")
 
 app = typer.Typer(add_completion=False)
 
@@ -36,7 +45,7 @@ def main(
     )
     os.makedirs(annotated_dir, exist_ok=True)
 
-    print("Initializing ScreenSeekeR visual grounding agent...")
+    logger.info("Initializing ScreenSeekeR visual grounding agent...")
     seeker: ScreenSeekeR = ScreenSeekeR()
     elem_config: ElementConfig = ElementConfig(
         target_name=target_name,
@@ -46,23 +55,20 @@ def main(
         model_name=app_config.MODEL_NAME,
     )
 
-    print("Taking desktop screenshot...")
+    logger.info("Taking desktop screenshot...")
     pyautogui.hotkey("win", "d")  # Show desktop to ensure icons are visible
     time.sleep(1)  # Allow time for desktop to be shown
     screenshot: Image.Image = pyautogui.screenshot()
 
-    print(f"Running visual search to locate: '{elem_config.target_name}'...")
+    logger.info(f"Running visual search to locate: '{elem_config.target_name}'...")
     try:
         icon_box = seeker.visual_search(screenshot, elem_config)
     except Exception as e:
-        print(f"Error during visual search: {e}", file=sys.stderr)
+        logger.error(f"Error during visual search: {e}")
         return
 
     if icon_box is None:
-        print(
-            f"[-] '{elem_config.target_name}' not found on the desktop.",
-            file=sys.stderr,
-        )
+        logger.error(f"'{elem_config.target_name}' not found on the desktop.")
         return
 
     # Compute coordinates
@@ -78,11 +84,11 @@ def main(
     click_x: int = int(cx * scale_x)
     click_y: int = int(cy * scale_y)
 
-    print(f"[+] '{elem_config.target_name}' successfully grounded!")
-    print(f"    - Bounding Box in Pixels: {icon_box}")
-    print(f"    - Center Pixel Coordinates: ({cx}, {cy})")
-    print(f"    - Display Scale Factors: x={scale_x:.2f}, y={scale_y:.2f}")
-    print(f"    - Resolved Click Coordinates: ({click_x}, {click_y})")
+    logger.info(f"'{elem_config.target_name}' successfully grounded!")
+    logger.info(f"  - Bounding Box in Pixels: {icon_box}")
+    logger.info(f"  - Center Pixel Coordinates: ({cx}, {cy})")
+    logger.info(f"  - Display Scale Factors: x={scale_x:.2f}, y={scale_y:.2f}")
+    logger.info(f"  - Resolved Click Coordinates: ({click_x}, {click_y})")
 
     # Annotate screenshot
     draw: ImageDraw.ImageDraw = ImageDraw.Draw(screenshot)
@@ -97,8 +103,7 @@ def main(
     output_path: str = os.path.join(annotated_dir, filename)
     screenshot.save(output_path)
 
-    print("[+] Saved annotated screenshot to:")
-    print(f"    {output_path}")
+    logger.info(f"Saved annotated screenshot to: {output_path}")
 
 
 if __name__ == "__main__":

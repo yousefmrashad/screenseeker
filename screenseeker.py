@@ -226,7 +226,7 @@ class ScreenSeekeR:
         """
         prompt = load_and_format_prompt("prompts/position_inference.md", config=config)
 
-        logger.info("Executing POSITIONINFERENCE with Planner (Structured Output)...")
+        logger.info("Executing POSITIONINFERENCE with Planner")
         try:
             response = generate_content_limited(
                 client=self.client,
