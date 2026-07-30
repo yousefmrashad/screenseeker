@@ -17,6 +17,7 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger("GroundingCLI")
+logger.setLevel(logging.INFO)
 
 app = typer.Typer(add_completion=False)
 
